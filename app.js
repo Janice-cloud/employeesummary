@@ -10,7 +10,6 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
 
-
 // Write code to use inquirer to gather information about the development team members,
 // and to create objects for each team member (using the correct classes as blueprints!)
 
@@ -32,4 +31,123 @@ const render = require("./lib/htmlRenderer");
 // and Intern classes should all extend from a class named Employee; see the directions
 // for further information. Be sure to test out each class and verify it generates an
 // object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work! ```
+// for the provided `render` function to work!```
+
+// This function will ask the user about their team members
+function askQuestions() {
+    let teams = [];
+
+    inquirer
+        .prompt([
+            {
+                name: "role",
+                message: "What is your role?",
+                type: "list",
+                choices: ["Manager", "Intern", "Engineer"],
+            },
+            {
+                name: "name",
+                message: "What is your name?",
+                type: "input",
+            },
+            {
+                name: "id",
+                message: "What is your id?",
+                type: "input",
+            },
+            {
+                name: "email",
+                message: "What is your email?",
+                type: "input",
+            },
+        ])
+        .then((answers) => {
+            let role = answers.role;
+
+            let questions = [];
+
+            if (role === "Manager") {
+                // ask manager qs
+                questions.push({
+                    name: "office_number",
+                    message: "What is your office number?",
+                    type: "input",
+                });
+            }
+
+            if (role === "Intern") {
+                questions.push({
+                    name: "school",
+                    message: "What is your school?",
+                    type: "input",
+                });
+            }
+
+            if (role === "Engineer") {
+                questions.push({
+                    name: "github",
+                    message: "What is your github username?",
+                    type: "input",
+                });
+            }
+
+            return { answers, questions };
+        })
+        .then(async ({ answers, questions }) => {
+            await inquirer.prompt(questions).then((response) => {
+                let role = answers.role;
+                if (role === "Manager") {
+                    teams.push(
+                        new Manager(
+                            answers.name,
+                            answers.id,
+                            answers.email,
+                            response.office_number
+                        )
+                    );
+                    console.log(teams);
+                }
+
+                if (role === "Intern") {
+                    teams.push(
+                        new Intern(
+                            answers.name,
+                            answers.id,
+                            answers.email,
+                            response.school
+                        )
+                    );
+                }
+
+                if (role === "Engineer") {
+                    teams.push(
+                        new Engineer(
+                            answers.name,
+                            answers.id,
+                            answers.email,
+                            response.github
+                        )
+                    );
+                }
+            });
+
+            await inquirer.prompt([
+                {
+                    name: 'add_again',
+                    message: 'Do you want to add more?',
+                    type: 'confirm',
+                }
+            ]).then(answer => {
+                if(answer.add_again){
+                    askQuestions()
+                }else{
+                    let html = render(teams)
+
+                    fs.writeFileSync('./output/team.html', html)
+                }
+            })
+        });
+}
+
+
+askQuestions()
